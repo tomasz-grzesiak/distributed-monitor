@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package synchro;
+
+message SynchroMessage {
+    enum MessageType {
+        LOCK = 0;
+        UNLOCK = 1;
+        NOTIFY = 2;
+        NOTIFY_ALL = 3;
+    }
+
+    int32 processID = 1;
+    repeated int32 clock = 2;
+    MessageType type = 3;
+    string objectID = 4;
+}
+
+message InitRequestMessage {
+    string address = 1;
+    bool ready = 2;
+}
+
+message InitResponseMessage {
+    int32 processID = 1;
+    string portMapperAddress = 2;
+    repeated string addresses = 3;
+}
+
+message NewConnectionMessage {
+    string address = 1;
+}   
