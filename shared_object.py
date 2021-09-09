@@ -7,7 +7,7 @@ class SharedObject:
         return f'SharedObject(name="{self.name}", connection_manager={self.connection_manager})'
 
     def lock(self):
-        pass
+        self.connection_manager.perform_lock(self.name)
 
     def unlock(self):
         pass
