@@ -1,18 +1,15 @@
 #!/usr/bin/python3
-from shared_object import SharedObject
-from connection_manager import ConnectionManager
+from shared_object_context import SharedObjectContext
 import time
 
 
 def main():
-    connection_manager = ConnectionManager()
-    prod_object = SharedObject('producer_object', connection_manager)
-    cons_object = SharedObject('consumer_object', connection_manager)
+    context = SharedObjectContext()
+    prod_object = context.shared_object('producer_object')
+    cons_object = context.shared_object('consumer_object')
     print(prod_object)
     print(cons_object)
     time.sleep(3)
-    print('node_sockets from main thread')
-    print(connection_manager.node_sockets)
     prod_object.lock()
     print('lock aquired!')
 

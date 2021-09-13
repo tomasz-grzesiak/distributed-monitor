@@ -53,20 +53,14 @@ def main():
         max_process_number = max_process_number + 1
         processes[max_process_number] = request.address
 
-        response = build_init_response()
-        rep_socket.send(response.SerializeToString())
-
-        ready_request = read_init_request()
-        rep_socket.send(b'')
-        if ready_request.address != request.address:
-            print('Source of messages does not match, request=%s, ready_request=%s'
-                  % (request.address, ready_request.address))
-            processes.pop(max_process_number)
-            continue
-
-        print('New node successfully connected, broadcasting info, address=%s' % ready_request.address)
-        send_new_connection_message(ready_request.address)
-        print('Active nodes in cluster: %s' % processes)
+        if request.ready:
+            rep_socket.send(b'')
+            print('New node successfully connected, address=%s, broadcasting to other nodes...' % request.address)
+            send_new_connection_message(request.address)
+            print('Active nodes in cluster: %s' % processes)
+        else:
+            response = build_init_response()
+            rep_socket.send(response.SerializeToString())
 
 
 if __name__ == '__main__':

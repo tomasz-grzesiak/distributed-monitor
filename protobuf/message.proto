@@ -1,19 +1,22 @@
 syntax = "proto3";
 
-package synchro;
-
 message SynchroMessage {
     enum MessageType {
-        LOCK = 0;
-        UNLOCK = 1;
+        LOCK_REQ = 0;
+        LOCK_ACK = 1;
         NOTIFY = 2;
         NOTIFY_ALL = 3;
+        NOTIFY_REQ = 4;
+        NOTIFY_ACK = 5;
+        NOTIFY_RST = 6;
     }
 
     int32 processID = 1;
     repeated int32 clock = 2;
     MessageType type = 3;
     string objectID = 4;
+    repeated int32 receiverProcessID = 5;
+    int32 notifyID = 6;
 }
 
 message InitRequestMessage {
@@ -29,4 +32,4 @@ message InitResponseMessage {
 
 message NewConnectionMessage {
     string address = 1;
-}   
+}

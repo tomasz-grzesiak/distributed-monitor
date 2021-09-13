@@ -17,9 +17,9 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='message.proto',
-  package='synchro',
+  package='',
   syntax='proto3',
-  serialized_pb=_b('\n\rmessage.proto\x12\x07synchro\"\xb8\x01\n\x0eSynchroMessage\x12\x11\n\tprocessID\x18\x01 \x01(\x05\x12\r\n\x05\x63lock\x18\x02 \x03(\x05\x12\x31\n\x04type\x18\x03 \x01(\x0e\x32#.synchro.SynchroMessage.MessageType\x12\x10\n\x08objectID\x18\x04 \x01(\t\"?\n\x0bMessageType\x12\x08\n\x04LOCK\x10\x00\x12\n\n\x06UNLOCK\x10\x01\x12\n\n\x06NOTIFY\x10\x02\x12\x0e\n\nNOTIFY_ALL\x10\x03\"4\n\x12InitRequestMessage\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\x12\r\n\x05ready\x18\x02 \x01(\x08\"V\n\x13InitResponseMessage\x12\x11\n\tprocessID\x18\x01 \x01(\x05\x12\x19\n\x11portMapperAddress\x18\x02 \x01(\t\x12\x11\n\taddresses\x18\x03 \x03(\t\"\'\n\x14NewConnectionMessage\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\tb\x06proto3')
+  serialized_pb=_b('\n\rmessage.proto\"\x93\x02\n\x0eSynchroMessage\x12\x11\n\tprocessID\x18\x01 \x01(\x05\x12\r\n\x05\x63lock\x18\x02 \x03(\x05\x12)\n\x04type\x18\x03 \x01(\x0e\x32\x1b.SynchroMessage.MessageType\x12\x10\n\x08objectID\x18\x04 \x01(\t\x12\x19\n\x11receiverProcessID\x18\x05 \x03(\x05\x12\x10\n\x08notifyID\x18\x06 \x01(\x05\"u\n\x0bMessageType\x12\x0c\n\x08LOCK_REQ\x10\x00\x12\x0c\n\x08LOCK_ACK\x10\x01\x12\n\n\x06NOTIFY\x10\x02\x12\x0e\n\nNOTIFY_ALL\x10\x03\x12\x0e\n\nNOTIFY_REQ\x10\x04\x12\x0e\n\nNOTIFY_ACK\x10\x05\x12\x0e\n\nNOTIFY_RST\x10\x06\"4\n\x12InitRequestMessage\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\t\x12\r\n\x05ready\x18\x02 \x01(\x08\"V\n\x13InitResponseMessage\x12\x11\n\tprocessID\x18\x01 \x01(\x05\x12\x19\n\x11portMapperAddress\x18\x02 \x01(\t\x12\x11\n\taddresses\x18\x03 \x03(\t\"\'\n\x14NewConnectionMessage\x12\x0f\n\x07\x61\x64\x64ress\x18\x01 \x01(\tb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -27,16 +27,16 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _SYNCHROMESSAGE_MESSAGETYPE = _descriptor.EnumDescriptor(
   name='MessageType',
-  full_name='synchro.SynchroMessage.MessageType',
+  full_name='SynchroMessage.MessageType',
   filename=None,
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='LOCK', index=0, number=0,
+      name='LOCK_REQ', index=0, number=0,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='UNLOCK', index=1, number=1,
+      name='LOCK_ACK', index=1, number=1,
       options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
@@ -47,47 +47,73 @@ _SYNCHROMESSAGE_MESSAGETYPE = _descriptor.EnumDescriptor(
       name='NOTIFY_ALL', index=3, number=3,
       options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='NOTIFY_REQ', index=4, number=4,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='NOTIFY_ACK', index=5, number=5,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='NOTIFY_RST', index=6, number=6,
+      options=None,
+      type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=148,
-  serialized_end=211,
+  serialized_start=176,
+  serialized_end=293,
 )
 _sym_db.RegisterEnumDescriptor(_SYNCHROMESSAGE_MESSAGETYPE)
 
 
 _SYNCHROMESSAGE = _descriptor.Descriptor(
   name='SynchroMessage',
-  full_name='synchro.SynchroMessage',
+  full_name='SynchroMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='processID', full_name='synchro.SynchroMessage.processID', index=0,
+      name='processID', full_name='SynchroMessage.processID', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='clock', full_name='synchro.SynchroMessage.clock', index=1,
+      name='clock', full_name='SynchroMessage.clock', index=1,
       number=2, type=5, cpp_type=1, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='type', full_name='synchro.SynchroMessage.type', index=2,
+      name='type', full_name='SynchroMessage.type', index=2,
       number=3, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='objectID', full_name='synchro.SynchroMessage.objectID', index=3,
+      name='objectID', full_name='SynchroMessage.objectID', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='receiverProcessID', full_name='SynchroMessage.receiverProcessID', index=4,
+      number=5, type=5, cpp_type=1, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='notifyID', full_name='SynchroMessage.notifyID', index=5,
+      number=6, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -104,27 +130,27 @@ _SYNCHROMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=27,
-  serialized_end=211,
+  serialized_start=18,
+  serialized_end=293,
 )
 
 
 _INITREQUESTMESSAGE = _descriptor.Descriptor(
   name='InitRequestMessage',
-  full_name='synchro.InitRequestMessage',
+  full_name='InitRequestMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='address', full_name='synchro.InitRequestMessage.address', index=0,
+      name='address', full_name='InitRequestMessage.address', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='ready', full_name='synchro.InitRequestMessage.ready', index=1,
+      name='ready', full_name='InitRequestMessage.ready', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -142,34 +168,34 @@ _INITREQUESTMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=213,
-  serialized_end=265,
+  serialized_start=295,
+  serialized_end=347,
 )
 
 
 _INITRESPONSEMESSAGE = _descriptor.Descriptor(
   name='InitResponseMessage',
-  full_name='synchro.InitResponseMessage',
+  full_name='InitResponseMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='processID', full_name='synchro.InitResponseMessage.processID', index=0,
+      name='processID', full_name='InitResponseMessage.processID', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='portMapperAddress', full_name='synchro.InitResponseMessage.portMapperAddress', index=1,
+      name='portMapperAddress', full_name='InitResponseMessage.portMapperAddress', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='addresses', full_name='synchro.InitResponseMessage.addresses', index=2,
+      name='addresses', full_name='InitResponseMessage.addresses', index=2,
       number=3, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -187,20 +213,20 @@ _INITRESPONSEMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=267,
-  serialized_end=353,
+  serialized_start=349,
+  serialized_end=435,
 )
 
 
 _NEWCONNECTIONMESSAGE = _descriptor.Descriptor(
   name='NewConnectionMessage',
-  full_name='synchro.NewConnectionMessage',
+  full_name='NewConnectionMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='address', full_name='synchro.NewConnectionMessage.address', index=0,
+      name='address', full_name='NewConnectionMessage.address', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -218,8 +244,8 @@ _NEWCONNECTIONMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=355,
-  serialized_end=394,
+  serialized_start=437,
+  serialized_end=476,
 )
 
 _SYNCHROMESSAGE.fields_by_name['type'].enum_type = _SYNCHROMESSAGE_MESSAGETYPE
@@ -232,28 +258,28 @@ DESCRIPTOR.message_types_by_name['NewConnectionMessage'] = _NEWCONNECTIONMESSAGE
 SynchroMessage = _reflection.GeneratedProtocolMessageType('SynchroMessage', (_message.Message,), dict(
   DESCRIPTOR = _SYNCHROMESSAGE,
   __module__ = 'message_pb2'
-  # @@protoc_insertion_point(class_scope:synchro.SynchroMessage)
+  # @@protoc_insertion_point(class_scope:SynchroMessage)
   ))
 _sym_db.RegisterMessage(SynchroMessage)
 
 InitRequestMessage = _reflection.GeneratedProtocolMessageType('InitRequestMessage', (_message.Message,), dict(
   DESCRIPTOR = _INITREQUESTMESSAGE,
   __module__ = 'message_pb2'
-  # @@protoc_insertion_point(class_scope:synchro.InitRequestMessage)
+  # @@protoc_insertion_point(class_scope:InitRequestMessage)
   ))
 _sym_db.RegisterMessage(InitRequestMessage)
 
 InitResponseMessage = _reflection.GeneratedProtocolMessageType('InitResponseMessage', (_message.Message,), dict(
   DESCRIPTOR = _INITRESPONSEMESSAGE,
   __module__ = 'message_pb2'
-  # @@protoc_insertion_point(class_scope:synchro.InitResponseMessage)
+  # @@protoc_insertion_point(class_scope:InitResponseMessage)
   ))
 _sym_db.RegisterMessage(InitResponseMessage)
 
 NewConnectionMessage = _reflection.GeneratedProtocolMessageType('NewConnectionMessage', (_message.Message,), dict(
   DESCRIPTOR = _NEWCONNECTIONMESSAGE,
   __module__ = 'message_pb2'
-  # @@protoc_insertion_point(class_scope:synchro.NewConnectionMessage)
+  # @@protoc_insertion_point(class_scope:NewConnectionMessage)
   ))
 _sym_db.RegisterMessage(NewConnectionMessage)
 
