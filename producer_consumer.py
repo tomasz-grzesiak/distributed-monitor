@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from shared_object_context import SharedObjectContext
+from shared_object import SharedObjectContext
 import time
 
 
@@ -12,6 +12,9 @@ def main():
     time.sleep(3)
     prod_object.lock()
     print('lock aquired!')
+    time.sleep(5)
+    prod_object.unlock()
+    print('lock released')
 
 
 if __name__ == '__main__':

@@ -5,7 +5,6 @@ import protobuf
 
 
 processes = {}
-max_process_number = 0
 rep_address = 'tcp://*:5555'
 pub_address = 'tcp://*:5566'
 rep_socket = None
@@ -29,7 +28,7 @@ def read_init_request():
     return request
 
 
-def build_init_response():
+def build_init_response(max_process_number: int):
     response = protobuf.InitResponseMessage()
     response.processID = max_process_number
     response.portMapperAddress = pub_address
@@ -46,20 +45,19 @@ def send_new_connection_message(address):
 
 def main():
     set_up_zmq()
+    max_process_number = 0
     while True:
         request = read_init_request()
-        print('New node joining cluster, address=%s' % request.address)
-        global max_process_number
-        max_process_number = max_process_number + 1
-        processes[max_process_number] = request.address
-
         if request.ready:
             rep_socket.send(b'')
             print('New node successfully connected, address=%s, broadcasting to other nodes...' % request.address)
+            processes[max_process_number] = request.address
             send_new_connection_message(request.address)
             print('Active nodes in cluster: %s' % processes)
         else:
-            response = build_init_response()
+            print('New node joining cluster, address=%s' % request.address)
+            max_process_number = max_process_number + 1
+            response = build_init_response(max_process_number)
             rep_socket.send(response.SerializeToString())
 
 
