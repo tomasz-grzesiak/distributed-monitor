@@ -3,9 +3,10 @@ from enum import Enum
 
 
 class SharedObjectState(Enum):
-    INACTIVE = 1
-    WAITING_FOR_LOCK_ACK = 2
+    UNLOCKED = 1
+    ACQUIRING_LOCK = 2
     LOCKED = 3
+    WAIT = 4
 
 
 class VectorClockComparisonResult(Enum):
@@ -17,11 +18,14 @@ class VectorClockComparisonResult(Enum):
 class SharedObject:
     def __init__(self, name, connection_manager):
         self.name = name
-        self.state = SharedObjectState.INACTIVE
+        self.state = SharedObjectState.UNLOCKED
         self.condition_lock = Condition()
         self.remaining_lock_ack_counter = 0
         self.waiting_for_lock_ack = []
         self.last_state_change_clock = []
+        self.notify_id_session = 0
+        self.notify_id_session_stored = []
+        self.remaining_notify_ack_counter = 0
         self.connection_manager = connection_manager
 
     def __str__(self):
@@ -35,26 +39,39 @@ class SharedObject:
 
     def lock(self):
         with self.condition_lock:
-            self.state = SharedObjectState.WAITING_FOR_LOCK_ACK
+            self._verify_state([SharedObjectState.UNLOCKED, SharedObjectState.WAIT])
+            self.state = SharedObjectState.ACQUIRING_LOCK
             self.connection_manager.perform_lock(self.name)
             self.condition_lock.wait_for(lambda: self.remaining_lock_ack_counter == 0)
-            print('ZDOBYTO LOCK!!!')
             self.state = SharedObjectState.LOCKED
 
     def unlock(self):
         with self.condition_lock:
-            self.state = SharedObjectState.INACTIVE
+            self._verify_state([SharedObjectState.LOCKED])
+            self.state = SharedObjectState.UNLOCKED
             self.connection_manager.perform_unlock(self.name)
+            self.remaining_lock_ack_counter = 0
             self.waiting_for_lock_ack = []
 
     def wait(self):
-        pass
+        with self.condition_lock:
+            self._verify_state([SharedObjectState.LOCKED])
+            self.state = SharedObjectState.WAIT
+            self.connection_manager.perform_unlock(self.name)
+            self.condition_lock.wait_for(lambda: self.remaining_notify_ack_counter == 0)
+            self.remaining_lock_ack_counter = 0
+            self.waiting_for_lock_ack = []
+            self.lock()
 
     def notify(self):
-        pass
+        with self.condition_lock:
+            self._verify_state([SharedObjectState.LOCKED])
+            self.connection_manager.perform_notify(self.name)
 
     def notify_all(self):
-        pass
+        with self.condition_lock:
+            self._verify_state([SharedObjectState.LOCKED])
+            self.connection_manager.perform_notify_all(self.name)
 
     def compare_clock(self, clock: list) -> VectorClockComparisonResult:
         if len(self.last_state_change_clock) < len(clock):
@@ -71,3 +88,11 @@ class SharedObject:
                     return VectorClockComparisonResult.NON_COMPARABLE
                 result = VectorClockComparisonResult.SMALLER
         return result
+
+    # def _is_owned(self) -> bool:
+    #     with self.condition_lock:
+    #         return self.state == SharedObjectState.LOCKED
+
+    def _verify_state(self, states: list):
+        if self.state not in states:
+            raise RuntimeError('Shared object in unexpected state! state=%s, expectedStates=%s' % (self.state, states))

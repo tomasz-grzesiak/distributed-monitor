@@ -10,6 +10,7 @@ def main():
     print(prod_object)
     print(cons_object)
     time.sleep(3)
+    print('waiting for lock...')
     prod_object.lock()
     print('lock aquired!')
     time.sleep(5)
