@@ -27,21 +27,25 @@ class SharedObject:
     def __str__(self):
         return f'SharedObject(name="{self.name}", connection_manager={self.connection_manager})'
 
+    def __enter__(self):
+        self.lock()
+
+    def __exit__(self, *args):
+        self.unlock()
+
     def lock(self):
-        self.condition_lock.acquire()
-        self.state = SharedObjectState.WAITING_FOR_LOCK_ACK
-        self.connection_manager.perform_lock(self.name)
-        self.condition_lock.wait_for(lambda: self.remaining_lock_ack_counter == 0)
-        print('ZDOBYTO LOCK!!!')
-        self.state = SharedObjectState.LOCKED
-        self.condition_lock.release()
+        with self.condition_lock:
+            self.state = SharedObjectState.WAITING_FOR_LOCK_ACK
+            self.connection_manager.perform_lock(self.name)
+            self.condition_lock.wait_for(lambda: self.remaining_lock_ack_counter == 0)
+            print('ZDOBYTO LOCK!!!')
+            self.state = SharedObjectState.LOCKED
 
     def unlock(self):
-        self.condition_lock.acquire()
-        self.state = SharedObjectState.INACTIVE
-        self.connection_manager.perform_unlock(self.name)
-        self.waiting_for_lock_ack = []
-        self.condition_lock.release()
+        with self.condition_lock:
+            self.state = SharedObjectState.INACTIVE
+            self.connection_manager.perform_unlock(self.name)
+            self.waiting_for_lock_ack = []
 
     def wait(self):
         pass
