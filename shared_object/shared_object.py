@@ -42,7 +42,8 @@ class SharedObject:
             self._verify_state([SharedObjectState.UNLOCKED, SharedObjectState.WAIT])
             self.state = SharedObjectState.ACQUIRING_LOCK
             self.connection_manager.perform_lock(self.name)
-            self.condition_lock.wait_for(lambda: self.remaining_lock_ack_counter == 0)
+            while self.remaining_lock_ack_counter > 0:
+                self.condition_lock.wait_for(lambda: self.remaining_lock_ack_counter == 0)
             self.state = SharedObjectState.LOCKED
 
     def unlock(self):
@@ -58,7 +59,10 @@ class SharedObject:
             self._verify_state([SharedObjectState.LOCKED])
             self.state = SharedObjectState.WAIT
             self.connection_manager.perform_unlock(self.name)
-            self.condition_lock.wait_for(lambda: self.remaining_notify_ack_counter == 0)
+            self.connection_manager.perform_wait(self.name)
+            self.condition_lock.wait()
+            self.notify_id_session = 0
+            self.notify_id_session_stored = []
             self.remaining_lock_ack_counter = 0
             self.waiting_for_lock_ack = []
             self.lock()

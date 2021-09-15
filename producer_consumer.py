@@ -7,8 +7,6 @@ def main():
     context = SharedObjectContext()
     prod_object = context.shared_object('producer_object')
     cons_object = context.shared_object('consumer_object')
-    print(prod_object)
-    print(cons_object)
     time.sleep(3)
     print('waiting for lock...')
     prod_object.lock()

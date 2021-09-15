@@ -1,6 +1,7 @@
 import zmq
 import protobuf
 from threading import Thread, RLock
+from copy import deepcopy
 from .shared_object import SharedObject, SharedObjectState, VectorClockComparisonResult
 
 
@@ -97,7 +98,7 @@ class SharedObjectContext:
                 for node_socket in self.node_sockets:
                     poller.register(node_socket, zmq.POLLIN)
                     poller.register(node_socket, zmq.POLLIN)
-            sockets_with_message = dict(poller.poll())
+            sockets_with_message = dict(poller.poll(2000))
             for socket_with_message in sockets_with_message:
                 self._handle_synchro_message(socket_with_message)
 
@@ -123,25 +124,27 @@ class SharedObjectContext:
             self._send_synchro_message(notify_ack_message)
 
     def _handle_message_for_known_object(self, synchro_message: protobuf.SynchroMessage):
-        print('received message', synchro_message)
+        print('Received synchro message: {processID=%s, clock=%s, type=%s, objectID=%s, receiverProcessID=%s, notifyID=%s}' % (synchro_message.processID, list(synchro_message.clock), self._map_synchro_message_type(synchro_message.type), synchro_message.objectID, synchro_message.receiverProcessID, synchro_message.notifyID))
         message_type = synchro_message.type
         message_clock = list(synchro_message.clock)
         self._synchronize_clock(message_clock)
         message_object: SharedObject = self.managed_objects[synchro_message.objectID]
+        print('object clock on message: ', message_object.last_state_change_clock, message_object.state)
         if message_type == protobuf.SynchroMessage.LOCK_REQ:
             with message_object.condition_lock:
                 state = message_object.state
                 if state == SharedObjectState.UNLOCKED or state == SharedObjectState.WAIT:
                     self._send_lock_ack_message(message_object.name, [synchro_message.processID])
-                    print('Odpowiadam LOCK_ACK dla procesu ', synchro_message.processID)
+                    print('Odpowiadam LOCK_ACK (UNLOCKED lub WAIT) dla procesu ', synchro_message.processID)
                 if state == SharedObjectState.ACQUIRING_LOCK:
                     comparison_result = message_object.compare_clock(message_clock)
+                    print(message_object.last_state_change_clock, message_clock)
                     if comparison_result == VectorClockComparisonResult.GREATER or (comparison_result == VectorClockComparisonResult.NON_COMPARABLE and synchro_message.processID < self.processID):
                         self._send_lock_ack_message(message_object.name, [synchro_message.processID])
-                        print('Odpowiadam LOCK_ACK dla procesu ', synchro_message.processID)
+                        print('Odpowiadam LOCK_ACK (ACQUIRING) dla procesu ', synchro_message.processID)
                     if comparison_result == VectorClockComparisonResult.SMALLER or (comparison_result == VectorClockComparisonResult.NON_COMPARABLE and synchro_message.processID > self.processID):
                         message_object.waiting_for_lock_ack.append(synchro_message.processID)
-                        print('Wstrzymuję LOCK_ACK dla procesu ', synchro_message.processID)
+                        print('Wstrzymuję LOCK_ACK (ACQUIRING) dla procesu ', synchro_message.processID)
                 if state == SharedObjectState.LOCKED:
                     message_object.waiting_for_lock_ack.append(synchro_message.processID)
                     print('Wstrzymuję LOCK_ACK dla procesu ', synchro_message.processID)
@@ -161,7 +164,7 @@ class SharedObjectContext:
                         notify_req_message = self._build_synchro_message(message_object.name, protobuf.SynchroMessage.NOTIFY_REQ)
                         notify_req_message.notifyID = synchro_message.notifyID
                         self._send_synchro_message(notify_req_message)
-                        message_object.last_state_change_clock = self.clock
+                        message_object.last_state_change_clock = deepcopy(self.clock)
                     else:
                         message_object.notify_id_session_stored.append(synchro_message.notifyID)
 
@@ -214,7 +217,7 @@ class SharedObjectContext:
                             notify_req_message = self._build_synchro_message(message_object.name, protobuf.SynchroMessage.NOTIFY_REQ)
                             notify_req_message.notifyID = message_object.notify_id_session
                             self._send_synchro_message(notify_req_message)
-                            message_object.last_state_change_clock = self.clock
+                            message_object.last_state_change_clock = deepcopy(self.clock)
                     else:
                         if synchro_message.notifyID in message_object.notify_id_session_stored:
                             message_object.notify_id_session_stored.remove(synchro_message.notifyID)
@@ -235,14 +238,14 @@ class SharedObjectContext:
 
     def perform_lock(self, object_id: str):
         with self.processes_lock:
+            if len(self.node_sockets) == 0:
+                return
             self.managed_objects[object_id].remaining_lock_ack_counter = len(self.node_sockets)
         message = self._build_synchro_message(object_id, protobuf.SynchroMessage.LOCK_REQ)
-        print('before clock lock')
         with self.clock_lock:
-            print('after clock llock')
             self._send_synchro_message(message)
-            self.managed_objects[object_id].last_state_change_clock = self.clock
-        print('Send LOCK_REQ message=%s' % message)
+            self.managed_objects[object_id].last_state_change_clock = deepcopy(self.clock)
+            print(self.clock)
 
     def perform_unlock(self, object_id: str):
         shared_object: SharedObject = self.managed_objects[object_id]
@@ -269,6 +272,13 @@ class SharedObjectContext:
             for single_process_clock in self.clock:
                 synchro_message.clock.append(single_process_clock)
         self.own_socket.send(synchro_message.SerializeToString())
+        print('Sent synchro message: {processID=%s, clock=%s, type=%s, objectID=%s, receiverProcessID=%s, notifyID=%s}' % (synchro_message.processID, list(synchro_message.clock), self._map_synchro_message_type(synchro_message.type), synchro_message.objectID, synchro_message.receiverProcessID, synchro_message.notifyID))
+
+    def perform_wait(self, object_id: str):
+        with self.processes_lock:
+            if len(self.node_sockets) == 0:
+                return
+            self.managed_objects[object_id].remaining_notify_ack_counter = len(self.node_sockets)
 
     def perform_notify(self, object_id: str):
         message = self._build_synchro_message(object_id, protobuf.SynchroMessage.NOTIFY)
@@ -280,3 +290,19 @@ class SharedObjectContext:
     def perform_notify_all(self, object_id: str):
         self._send_synchro_message(self._build_synchro_message(object_id, protobuf.SynchroMessage.NOTIFY_ALL))
 
+    def _map_synchro_message_type(self, message_type: int) -> str:
+        if message_type == 0:
+            return 'LOCK_REQ'
+        if message_type == 1:
+            return 'LOCK_ACK'
+        if message_type == 2:
+            return 'NOTIFY'
+        if message_type == 3:
+            return 'NOTIFY_ALL'
+        if message_type == 4:
+            return 'NOTIFY_REQ'
+        if message_type == 5:
+            return 'NOTIFY_ACK'
+        if message_type == 6:
+            return 'NOTIFY_RST'
+        raise RuntimeError('Unexpected synchro_message type! type=%s' % message_type)
